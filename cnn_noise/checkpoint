@@ -1,0 +1,4 @@
+model_checkpoint_path: "D:\\Space_Invaders_NNRB/cnn_noise/scaledmodeleSPeed00006d98-1500"
+all_model_checkpoint_paths: "D:\\Space_Invaders_NNRB/cnn_noise/scaledmodeleSPeed00006d98-500"
+all_model_checkpoint_paths: "D:\\Space_Invaders_NNRB/cnn_noise/scaledmodeleSPeed00006d98-1000"
+all_model_checkpoint_paths: "D:\\Space_Invaders_NNRB/cnn_noise/scaledmodeleSPeed00006d98-1500"
