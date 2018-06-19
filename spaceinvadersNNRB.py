@@ -1287,7 +1287,7 @@ class SpaceInvaders(object):
 				self.AIchooseOK()
 			if self.timeSpent < 60000:
 				self.AIchooseEASY()
-			elif self.livesStart / self.lives < 2:
+			elif (not self.lives == 0) and self.livesStart / self.lives < 2:
 				self.AIchooseEASY()
 			else:
 				self.AIchooseOK()

@@ -44,7 +44,6 @@ class Environment(object):
 	#Get 'frame' games
 		run = True
 		fullLogFileName = os.path.join(os.getcwd(), 'logs', 'fulllogfile.txt')
-		open(logFileName, 'a').close()
 		open(fullLogFileName, 'a').close()
 		while(run):
 			nextGameState = None
@@ -52,11 +51,10 @@ class Environment(object):
 			logFileList = None
 			logState = None
 			action = 0
-			with open(logFileName, 'r') as logfile:
-				if len(self.fullCurrentState) < 23 * self.frame:
-					nextGameState = spaceinvadersNNRB.GameState(100, random.choice(var2), 500, 14, 0.25, 3)
-				else:
-					nextGameState, action = self.selectGameState(self.fullCurrentState)
+			if len(self.fullCurrentState) < 23 * self.frame:
+				nextGameState = spaceinvadersNNRB.GameState(100, random.choice(var2), 500, 14, 0.25, 3)
+			else:
+				nextGameState, action = self.selectGameState(self.fullCurrentState)
 			game = spaceinvadersNNRB.SpaceInvaders(nextGameState.startDistance, nextGameState.enemySpeed, nextGameState.bulletSpeed, nextGameState.columnAmount, nextGameState.speedUpPerc, nextGameState.livesStart, self.Artificial)
 			currentState = spaceinvadersNNRB.startGame(game)
 			if len(self.fullCurrentState) == 23 * self.frame:
