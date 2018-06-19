@@ -36,50 +36,56 @@ class Environment(object):
 			self.buffer = joblib.load(rbuffFile)
 		self.bufferCount = len(self.buffer)
 		
+		self.fullCurrentState = []
+		
 		self.Artificial = random.choice([0,1])
 		
 	def runEnvironment(self):
 	#Get 'frame' games
 		run = True
-		logFileName = os.path.join(os.getcwd(), 'logs', 'logfile.txt') 
 		fullLogFileName = os.path.join(os.getcwd(), 'logs', 'fulllogfile.txt')
 		open(logFileName, 'a').close()
 		open(fullLogFileName, 'a').close()
 		while(run):
 			nextGameState = None
+			nextFullState = None
 			logFileList = None
 			logState = None
 			action = 0
 			with open(logFileName, 'r') as logfile:
-				logFileList = logfile.readlines()
-				if len(logFileList) < self.frame:
+				if len(self.fullCurrentState) < 23 * self.frame:
 					nextGameState = spaceinvadersNNRB.GameState(100, random.choice(var2), 500, 14, 0.25, 3)
 				else:
-					logState = self.filetoState(logFileList)
-					nextGameState, action = self.selectGameState(logState)
+					nextGameState, action = self.selectGameState(self.fullCurrentState)
 			game = spaceinvadersNNRB.SpaceInvaders(nextGameState.startDistance, nextGameState.enemySpeed, nextGameState.bulletSpeed, nextGameState.columnAmount, nextGameState.speedUpPerc, nextGameState.livesStart, self.Artificial)
 			currentState = spaceinvadersNNRB.startGame(game)
-			if len(logFileList) == self.frame:
-				self.trainDeep(logState, currentState, nextGameState, action)
+			if len(self.fullCurrentState) == 23 * self.frame:
+				nextFullState = self.trainDeep(self.fullCurrentState, currentState, nextGameState, action)
+			else:
+				nextFullState = self.fullCurrentState
+				nextFullState.extend(self.getCurrentState(self.gameAndPlayertoString(nextGameState, currentState)))
 			
 			if not currentState:
 				run = False
 			else:
 				run = not currentState.rageQuit
-				logFileList.append(str(nextGameState.startDistance) + " " + str(nextGameState.enemySpeed) + " " + str(nextGameState.bulletSpeed) + " " + str(nextGameState.columnAmount) + " " + str(nextGameState.speedUpPerc) + " " + str(nextGameState.livesStart) + " " + str(currentState.win) + " " + str(currentState.Time) + " " + str(currentState.shot) + " " + str(currentState.hit) + " " + str(currentState.pressed) + " " + str(currentState.like) + " " + str(currentState.gameMood) + " " + str(currentState.distance) + " " +  str(currentState.lives) + " " + str(currentState.enemies)+ " " + str(currentState.mysteryShot) + " " + str(currentState.stage2) + " " + str(currentState.doubleBullets) + " " + str(currentState.timeDoubleBullet) + " " + str(currentState.shotStage2) + " " + str(currentState.shotdouble) + " " + str(currentState.hitStage2) + " " + str(currentState.hitdouble) + " " + str(currentState.rageQuit) + " " + str(currentState.instakill) + " " + str(currentState.enemyBulletHit) + " " + str(currentState.enemyHit) + " " + str(currentState.blockerHit) + "\n")
+				#logFileList.append(str(nextGameState.startDistance) + " " + str(nextGameState.enemySpeed) + " " + str(nextGameState.bulletSpeed) + " " + str(nextGameState.columnAmount) + " " + str(nextGameState.speedUpPerc) + " " + str(nextGameState.livesStart) + " " + str(currentState.win) + " " + str(currentState.Time) + " " + str(currentState.shot) + " " + str(currentState.hit) + " " + str(currentState.pressed) + " " + str(currentState.like) + " " + str(currentState.gameMood) + " " + str(currentState.distance) + " " +  str(currentState.lives) + " " + str(currentState.enemies)+ " " + str(currentState.mysteryShot) + " " + str(currentState.stage2) + " " + str(currentState.doubleBullets) + " " + str(currentState.timeDoubleBullet) + " " + str(currentState.shotStage2) + " " + str(currentState.shotdouble) + " " + str(currentState.hitStage2) + " " + str(currentState.hitdouble) + " " + str(currentState.rageQuit) + " " + str(currentState.instakill) + " " + str(currentState.enemyBulletHit) + " " + str(currentState.enemyHit) + " " + str(currentState.blockerHit) + "\n")
 				with open(fullLogFileName, "a") as full_logging_file:
 					full_logging_file.write(str(nextGameState.startDistance) + " " + str(nextGameState.enemySpeed) + " " + str(nextGameState.bulletSpeed) + " " + str(nextGameState.columnAmount) + " " + str(nextGameState.speedUpPerc) + " " + str(nextGameState.livesStart) + " " + str(currentState.win) + " " + str(currentState.Time) + " " + str(currentState.shot) + " " + str(currentState.hit) + " " + str(currentState.pressed) + " " + str(currentState.like) + " " + str(currentState.gameMood) + " " + str(currentState.distance) + " " +  str(currentState.lives) + " " + str(currentState.enemies)+ " " + str(currentState.mysteryShot) + " " + str(currentState.stage2) + " " + str(currentState.doubleBullets) + " " + str(currentState.timeDoubleBullet) + " " + str(currentState.shotStage2) + " " + str(currentState.shotdouble) + " " + str(currentState.hitStage2) + " " + str(currentState.hitdouble) + " " + str(currentState.rageQuit) + " " + str(currentState.instakill) + " " + str(currentState.enemyBulletHit) + " " + str(currentState.enemyHit) + " " + str(currentState.blockerHit) + "\n")
-				if len(logFileList) > self.frame:
-					del logFileList[0]
-				with open(logFileName, "w") as logging_file:
-					for i in logFileList:
-						logging_file.write(i)
+				#if len(fullCurrentState) > 23 * self.frame:
+				#	for i in range(0,23):
+				#		del fullCurrentState[0]
+				#with open(logFileName, "w") as logging_file:
+				#	for i in logFileList:
+				#		logging_file.write(i)
+				self.fullCurrentState = nextFullState
+				print(self.fullCurrentState)
 			if self.bufferCount - self.batchSize > 0 and(self.bufferCount - self.batchSize) % self.switch == 0:
 				self.Artificial = random.choice([0,1])
 				self.deep.save(self.bufferCount - self.batchSize)
+				joblib.dump(self.buffer, 'buffer' + str(self.bufferCount - self.batchSize) + '.pkl')
 			if self.bufferCount - self.batchSize == self.games:
 				run = False
-		joblib.dump(self.buffer, 'buffer.pkl')
 	
 	def filetoState(self,logfile):
 		state = []
@@ -128,7 +134,7 @@ class Environment(object):
 		else:
 			return self.deep.inference([state])
 			
-	def trainDeep(self, currentState, currentPlayer,currentGame, action):
+	def trainDeep(self, currentState, currentPlayer,currentGame, action): #returns next state for usage
 		nextState = [currentState[i] for i in range(int(len(currentState)/self.frame), len(currentState), 1)]
 		nextState.extend(self.getCurrentState(self.gameAndPlayertoString(currentGame, currentPlayer)))
 		buffElement = replay_buffer(currentState, nextState, action, rewards[int(currentPlayer.like) + 1])
@@ -136,6 +142,7 @@ class Environment(object):
 		self.bufferCount += 1
 		if self.bufferCount >= self.batchSize:
 			self.deep.train(self.makeBatches(), self.bufferCount - self.batchSize, 0, 0)
+		return nextState
 		
 		
 		

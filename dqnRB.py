@@ -102,19 +102,19 @@ class DQN:
         #Sixth (Output) layer is fully connected linear layer
         with tf.variable_scope("fc2_" + name):
             W_fc2, b_fc2 = self.makeLayerVariables([512, 256], trainable, "fc2")
-            h_fc2 = tf.matmul(h_fc1, W_fc2) + b_fc2
+            h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2, name="h_fc2")
             print(h_fc2)
 	
         with tf.variable_scope("fc3_" + name):
             W_fc3, b_fc3 = self.makeLayerVariables([256, 128], trainable, "fc3")
 
-            h_fc3 = tf.matmul(h_fc2, W_fc3) + b_fc3
+            h_fc3 = tf.nn.relu(tf.matmul(h_fc2, W_fc3) + b_fc3, name="h_fc3")
             print(h_fc3)
 			
         with tf.variable_scope("fc4_" + name):
             W_fc4, b_fc4 = self.makeLayerVariables([128, self.numActions], trainable, "fc4")
 
-            y = tf.matmul(h_fc3, W_fc4) + b_fc4
+            y = tf.nn.relu(tf.matmul(h_fc3, W_fc4) + b_fc4, name="y")
             print(y)
         return x, y
 
@@ -140,7 +140,6 @@ class DQN:
     def inferenceQValue(self, screens):
         y = self.sess.run([self.y], {self.x: screens})
         q_values = np.squeeze(y)
-        print(q_values)
         return np.argmax(q_values), np.max(q_values)
 
     def train(self, batch, stepNumber, epochNumber, steps):

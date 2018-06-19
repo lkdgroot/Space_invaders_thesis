@@ -8,6 +8,8 @@ from random import shuffle, randrange, choice, random
 import decimal
 import itertools
 
+from gameclock import GameClock
+
 import os.path
 import numpy
 import collections
@@ -27,6 +29,8 @@ import smtplib
 import dqnRB
 
 import operator
+
+clock = None
 
 #           R    G    B
 WHITE 	= (255, 255, 255)
@@ -131,7 +135,7 @@ class Enemy(sprite.Sprite):
 		self.addLeftMoves = False
 		self.numOfRightMoves = 0
 		self.numOfLeftMoves = 0
-		self.timer = time.get_ticks()
+		self.timer = clock.get_ticks()
 		
 		self.distanceAdded = 0
 		
@@ -240,7 +244,7 @@ class Mystery(sprite.Sprite):
 		self.row = 5
 		self.moveTime = 10000
 		self.direction = 1
-		self.timer = time.get_ticks()
+		self.timer = clock.get_ticks()
 		self.mysteryEntered = mixer.Sound('sounds/mysteryentered.wav')
 		self.mysteryEntered.set_volume(0.3)
 		self.playSound = True
@@ -287,7 +291,7 @@ class Explosion(sprite.Sprite):
 			self.rect = self.image.get_rect(topleft=(xpos, ypos))
 			game.screen.blit(self.image, self.rect)
 			
-		self.timer = time.get_ticks()
+		self.timer = clock.get_ticks()
 		
 	def update(self, keys, currentTime):
 		if self.isMystery:
@@ -400,6 +404,8 @@ class SpaceInvaders(object):
 		self.artificial = artificial
 
 	def reset(self, score, lives, newGame=False):
+		global clock
+		clock = GameClock(300.0, 3000.0, update_callback= self.update_main, frame_callback=self.update_frame)
 		self.player = Ship()
 		self.playerGroup = sprite.Group(self.player)
 		self.explosionsGroup = sprite.Group()
@@ -414,10 +420,11 @@ class SpaceInvaders(object):
 		if newGame:
 			self.allBlockers = sprite.Group(self.make_blockers(0), self.make_blockers(1), self.make_blockers(2), self.make_blockers(3))
 		self.keys = key.get_pressed()
-		self.clock = time.Clock()
-		self.timer = time.get_ticks()
-		self.noteTimer = time.get_ticks()
-		self.shipTimer = time.get_ticks()
+		#self.clock = time.Clock()
+		#self.clock = GameClock(60.0, 60.0, update_callback= self.update_main, frame_callback=self.update_frame)
+		self.timer = clock.get_ticks()
+		self.noteTimer = clock.get_ticks()
+		self.shipTimer = clock.get_ticks()
 		self.score = score
 		self.lives = lives
 		self.create_audio()
@@ -522,16 +529,16 @@ class SpaceInvaders(object):
 		for e in event.get():
 			if e.type == QUIT:
 				if self.startGame and len(self.enemies) > 0:
-					self.timeSpent = time.get_ticks() - self.startTime
+					self.timeSpent = clock.get_ticks() - self.startTime
 					self.likeScreen = True
 					self.startGame = False
 					self.RageQuit = True
 			if e.type == KEYDOWN:
 				if e.key == K_SPACE:
 					self.pressed += 1
-					gameTimeCurr = time.get_ticks() - self.startTime
+					gameTimeCurr = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Button: Space  Time: " + str(gameTimeCurr))
-					self.pressed_last = time.get_ticks()
+					self.pressed_last = clock.get_ticks()
 					if len(self.bullets) == 0 and self.shipAlive:
 						if self.score < 1000:
 							self.bulletShot += 1
@@ -557,24 +564,24 @@ class SpaceInvaders(object):
 							self.sounds["shoot2"].play()
 				elif e.key == K_LEFT:
 					self.pressed += 1
-					gameTimeCurr = time.get_ticks() - self.startTime
+					gameTimeCurr = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Button: Left  Time: " + str(gameTimeCurr) + " X: " + str(self.player.rect.x))
 				elif e.key == K_RIGHT:
 					self.pressed += 1
-					gameTimeCurr = time.get_ticks() - self.startTime
+					gameTimeCurr = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Button: Right  Time: " + str(gameTimeCurr)  + " X: " + str(self.player.rect.x))
 			if e.type == KEYUP:
 				if self.keys[K_ESCAPE]:
 					if self.startGame and len(self.enemies) > 0:
-						self.timeSpent = time.get_ticks() - self.startTime
+						self.timeSpent = clock.get_ticks() - self.startTime
 						self.likeScreen = True
 						self.startGame = False
 						self.RageQuit = True				
 				elif e.key == K_LEFT:
-					gameTimeCurr = time.get_ticks() - self.startTime
+					gameTimeCurr = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Button release: Left  Time: " + str(gameTimeCurr) + " X: " + str(self.player.rect.x))
 				elif e.key == K_RIGHT:
-					gameTimeCurr = time.get_ticks() - self.startTime
+					gameTimeCurr = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Button release: Right  Time: " + str(gameTimeCurr) + " X: " + str(self.player.rect.x))
 				
 
@@ -610,11 +617,11 @@ class SpaceInvaders(object):
 		for enemy in self.enemies:
 			if enemy.column == column and enemy.row == row:
 				## Bullet speed
-				if (time.get_ticks() - self.timer) > bulletSpeed:
+				if (clock.get_ticks() - self.timer) > bulletSpeed:
 					self.enemyBullets.add(Bullet(enemy.rect.x + 14, enemy.rect.y + 20, 1, 5, "enemylaser", "center"))
 					self.allSprites.add(self.enemyBullets)
-					self.timer = time.get_ticks() 
-					logTime = time.get_ticks() - self.startTime
+					self.timer = clock.get_ticks() 
+					logTime = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Enemy bullet made  Time: " + str(logTime) + " X: " + str(enemy.rect.x) + " Y: " + str(enemy.rect.y) + " Row: " + str(row) + " Column: " + str(column))
 
 	def calculate_score(self, row):
@@ -630,7 +637,7 @@ class SpaceInvaders(object):
 		self.score += score
 		if(self.score >= 1000 and not self.reachDoubleBullet):
 			self.reachDoubleBullet = True
-			self.timeDoubleBullet = time.get_ticks() - self.startTime
+			self.timeDoubleBullet = clock.get_ticks() - self.startTime
 		return score
 
 	def create_main_menu(self,keys):
@@ -665,8 +672,8 @@ class SpaceInvaders(object):
 				else:
 					self.startGame = True
 					self.mainScreen = False
-					self.startTime = time.get_ticks()
-					self.pressed_last = time.get_ticks()
+					self.startTime = clock.get_ticks()
+					self.pressed_last = clock.get_ticks()
 	
 	def update_enemy_speed(self):
 		if (len(self.enemies) <= int((self.columnAmount * 5) * self.speedUp)) and not self.reachStage2:
@@ -694,7 +701,7 @@ class SpaceInvaders(object):
 					self.enemyBullets.remove(currentSprite)
 					self.allSprites.remove(currentSprite)
 					self.count_hit()
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.enemyBulletHit +=1
 					self.logPlayer.append("Bullet collision  Time: " + str(collTimer) + " X: " + str(currentSprite.rect.x) + " Y: " + str(currentSprite.rect.y))
 
@@ -710,9 +717,9 @@ class SpaceInvaders(object):
 					self.explosionsGroup.add(explosion)
 					self.allSprites.remove(currentSprite)
 					self.enemies.remove(currentSprite)
-					self.gameTimer = time.get_ticks()
+					self.gameTimer = clock.get_ticks()
 					self.count_hit()
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.enemyHit +=1
 					self.logPlayer.append("Enemy hit collision  Time: " + str(collTimer) + " Row: " + str(self.killedRow) + " Column: " + str(self.killedColumn) + " X: " + str(currentSprite.rect.x) + " Y: " + str(currentSprite.rect.y))					
 					break
@@ -733,7 +740,7 @@ class SpaceInvaders(object):
 					self.mysteryGroup.add(newShip)
 					self.count_hit()
 					self.mysteryHit += 1
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Mystery hit collision  Time: " + str(collTimer) + " X: " + str(currentSprite.rect.x))
 					break
 
@@ -770,9 +777,9 @@ class SpaceInvaders(object):
 					self.allSprites.remove(playerShip)
 					self.playerGroup.remove(playerShip)
 					self.makeNewShip = True
-					self.shipTimer = time.get_ticks()
+					self.shipTimer = clock.get_ticks()
 					self.shipAlive = False
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Death  Time: " + str(collTimer) + " X: " + str(playerShip.rect.x))
 
 		instakilldict = sprite.groupcollide(self.enemies, self.playerGroup, True, True)
@@ -781,7 +788,7 @@ class SpaceInvaders(object):
 				for currentSprite in value:
 					self.gameOver = True
 					self.startGame = False
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Instant Death  Time: " + str(collTimer) + " X: " + str(currentSprite.rect.x))
 					self.instakill = True
 
@@ -790,20 +797,20 @@ class SpaceInvaders(object):
 			for value in selfblockdict.values():
 				for currentSprite in value:
 					self.count_hit()
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Bullet hit blocker: " + str(collTimer) + " X: " + str(currentSprite.rect.x) + " Y: " + str(currentSprite.rect.y))
 					self.blockerHit += 1
 		enemyblockdict = sprite.groupcollide(self.enemyBullets, self.allBlockers, True, True)
 		if enemyblockdict:
 			for value in enemyblockdict.values():
 				for currentSprite in value:	
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Enemy bullet hit blocker: " + str(collTimer) + " X: " + str(currentSprite.rect.x) + " Y: " + str(currentSprite.rect.y))	
 		enemybodyblockdict = sprite.groupcollide(self.enemies, self.allBlockers, False, True)
 		if enemybodyblockdict:
 			for value in enemybodyblockdict.values():
 				for currentSprite in value:
-					collTimer = time.get_ticks() - self.startTime
+					collTimer = clock.get_ticks() - self.startTime
 					self.logPlayer.append("Enemy hit blocker: " + str(collTimer) + " X: " + str(currentSprite.rect.x) + " Y: " + str(currentSprite.rect.y))	
 
 	def create_new_ship(self, createShip, currentTime):
@@ -1145,7 +1152,7 @@ class SpaceInvaders(object):
 	
 	def AI3shoot(self, bulletX):
 		if len(self.bullets) == 0:
-			testTime = time.get_ticks()
+			testTime = clock.get_ticks()
 			for e in self.enemies:
 				currMoveNumbers = e.moveNumber
 				bullHeight = self.player.rect.y
@@ -1212,7 +1219,7 @@ class SpaceInvaders(object):
     ##idx = (np.abs(array-value)).argmin()
 			
 	def chooseDirectionp2Enemy3(self, bulletX, enemyToFind):
-		testTime = time.get_ticks()
+		testTime = clock.get_ticks()
 		for e in self.enemies:
 			currMoveNumbers = e.moveNumber
 			bullHeight = self.player.rect.y
@@ -1314,6 +1321,7 @@ class SpaceInvaders(object):
 
 			
 	def main(self):
+		self.end = False
 		self.saveScreen = False
 		while True:
 			if self.mainScreen:
@@ -1329,98 +1337,107 @@ class SpaceInvaders(object):
 				self.keys = key.get_pressed()
 				self.AIchooseStart()
 				self.create_main_menu(self.keys)
-
-			elif self.startGame:
-				if len(self.enemies) == 0:
-					self.won = 1
-					self.reachStage2 = True
-					currentTime = time.get_ticks()
-					self.timeSpent = currentTime - self.startTime
-					if currentTime - self.gameTimer < 3000:              
-						self.screen.blit(self.background, (0,0))
-						self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 85, 5)
-						self.scoreText.draw(self.screen)
-						self.scoreText2.draw(self.screen)
-						self.nextRoundText.draw(self.screen)
-						self.livesText.draw(self.screen)
-						self.livesGroup.update(self.keys)
-						self.check_input()
-					if currentTime - self.gameTimer > 3000:
-						# Move enemies closer to bottom
-						#self.enemyPositionStart += 35
-						#self.reset(self.score, self.lives)
-						#self.make_enemies()
-						#self.gameTimer += 3000
-						self.startGame = False
-						self.likeScreen = True
+			else:
+				clock.tick()
+			if self.end:
+				if self.mainQuit:
+					self.state = False
 				else:
-					currentTime = time.get_ticks()
-					self.play_main_music(currentTime)              
+	#					self.state = PlayerState(self.won, self.timeSpent, self.bulletShot, self.bulletHit, self.pressed, self.liked, self.mood, self.distanceEnd, self.lives, len(self.enemies), self.continueGame, self.mysteryHit, self.reachStage2, self.reachDoubleBullet, self.timeDoubleBullet, self.shotStage2, self.shotdouble, self.hitStage2, self.hitdouble, self.RageQuit, self.instakill, self.enemyBulletHit, self.enemyHit, self.blockerHit)
+					self.state = PlayerState(self.won, self.timeSpent, self.bulletShot, self.bulletHit, self.pressed, self.liked, self.mood, self.distanceEnd, self.lives, len(self.enemies), self.mysteryHit, self.reachStage2, self.reachDoubleBullet, self.timeDoubleBullet, self.shotStage2, self.shotdouble, self.hitStage2, self.hitdouble, self.RageQuit, self.instakill, self.enemyBulletHit, self.enemyHit, self.blockerHit)
+				return self.state
+
+	def update_frame(self, dt):
+		self.screen.blit(self.background, (0,0))
+		#self.allSprites.clear(self.screen)
+		self.allSprites.draw(self.screen)
+		display.update()
+				
+	def update_main(self, dt):
+
+		if self.startGame:
+			if len(self.enemies) == 0:
+				self.won = 1
+				self.reachStage2 = True
+				currentTime = clock.get_ticks()
+				self.timeSpent = currentTime - self.startTime
+				if currentTime - self.gameTimer < 3000:              
 					self.screen.blit(self.background, (0,0))
-					self.allBlockers.update(self.screen)
 					self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 85, 5)
 					self.scoreText.draw(self.screen)
 					self.scoreText2.draw(self.screen)
+					self.nextRoundText.draw(self.screen)
 					self.livesText.draw(self.screen)
+					self.livesGroup.update(self.keys)
 					self.check_input()
-					#self.pressed = self.pressed + sum(self.keys)
-					if self.artificial == 0:
-						self.AIevents()
-					else:
-						self.AIevents3()
-					self.allSprites.update(self.keys, currentTime, self.killedRow, self.killedColumn, self.killedArray)
-					self.explosionsGroup.update(self.keys, currentTime)
-					self.check_collisions()
-					self.create_new_ship(self.makeNewShip, currentTime)
-					self.update_enemy_speed()
+				if currentTime - self.gameTimer > 3000:
+					# Move enemies closer to bottom
+					#self.enemyPositionStart += 35
+					#self.reset(self.score, self.lives)
+					#self.make_enemies()
+					#self.gameTimer += 3000
+					self.startGame = False
+					self.likeScreen = True
+			else:
+				currentTime = clock.get_ticks()
+				self.play_main_music(currentTime)              
+				self.screen.blit(self.background, (0,0))
+				self.allBlockers.update(self.screen)
+				self.scoreText2 = Text(FONT, 20, str(self.score), GREEN, 85, 5)
+				self.scoreText.draw(self.screen)
+				self.scoreText2.draw(self.screen)
+				self.livesText.draw(self.screen)
+				self.check_input()
+				#self.pressed = self.pressed + sum(self.keys)
+				if self.artificial == 0:
+					self.AIevents()
+				else:
+					self.AIevents3()
+				self.allSprites.update(self.keys, currentTime, self.killedRow, self.killedColumn, self.killedArray)
+				self.explosionsGroup.update(self.keys, currentTime)
+				self.check_collisions()
+				self.create_new_ship(self.makeNewShip, currentTime)
+				self.update_enemy_speed()
 
-					if len(self.enemies) > 0:
-						self.make_enemies_shoot(self.bulletSpeed)
-						for en in self.enemies:
-							self.distanceEnd = en.distanceAdded + self.enemyPositionDefault
-							break
-					if self.distanceEnd >= 900 or currentTime - self.startTime >= 600000:
-						self.startGame = False
-						self.gameOver = True
-	
-			elif self.gameOver:
-				self.won = 0
-				currentTime = time.get_ticks()
-				self.timeSpent = currentTime - self.startTime
-				# Reset enemy starting position
-				self.enemyPositionStart = self.enemyPositionDefault
-				self.create_game_over(currentTime)
-				#return 0
+				if len(self.enemies) > 0:
+					self.make_enemies_shoot(self.bulletSpeed)
+					for en in self.enemies:
+						self.distanceEnd = en.distanceAdded + self.enemyPositionDefault
+						break
+				if self.distanceEnd >= 900 or currentTime - self.startTime >= 600000:
+					self.startGame = False
+					self.gameOver = True
+
+		elif self.gameOver:
+			self.won = 0
+			currentTime = clock.get_ticks()
+			self.timeSpent = currentTime - self.startTime
+			# Reset enemy starting position
+			self.enemyPositionStart = self.enemyPositionDefault
+			self.create_game_over(currentTime)
+			#return 0
+		
+		elif self.likeScreen:
+			self.screen.blit(self.background, (0,0))
+			self.AIchooseDiff()
+			self.liked = self.create_like_screen(self.keys)
 			
-			elif self.likeScreen:
-				self.screen.blit(self.background, (0,0))
-				self.AIchooseDiff()
-				self.liked = self.create_like_screen(self.keys)
-				
-			elif self.moodScreen:
-				self.screen.blit(self.background, (0,0))
-				self.AIchooseMood()
-				self.mood = self.create_mood_screen(self.keys)
-			
+		elif self.moodScreen:
+			self.screen.blit(self.background, (0,0))
+			self.AIchooseMood()
+			self.mood = self.create_mood_screen(self.keys)
+		
 #			elif self.continueScreen:
 #				self.screen.blit(self.background, (0,0))
 #				self.check_input()
 #				self.continueGame = self.create_continue_screen(self.keys)			
 #				
-			elif self.saveScreen:
-				self.screen.blit(self.background, (0,0))
-				self.create_save_screen()
-			
-			elif self.end:
-				if self.mainQuit:
-					self.state = False
-				else:
-#					self.state = PlayerState(self.won, self.timeSpent, self.bulletShot, self.bulletHit, self.pressed, self.liked, self.mood, self.distanceEnd, self.lives, len(self.enemies), self.continueGame, self.mysteryHit, self.reachStage2, self.reachDoubleBullet, self.timeDoubleBullet, self.shotStage2, self.shotdouble, self.hitStage2, self.hitdouble, self.RageQuit, self.instakill, self.enemyBulletHit, self.enemyHit, self.blockerHit)
-					self.state = PlayerState(self.won, self.timeSpent, self.bulletShot, self.bulletHit, self.pressed, self.liked, self.mood, self.distanceEnd, self.lives, len(self.enemies), self.mysteryHit, self.reachStage2, self.reachDoubleBullet, self.timeDoubleBullet, self.shotStage2, self.shotdouble, self.hitStage2, self.hitdouble, self.RageQuit, self.instakill, self.enemyBulletHit, self.enemyHit, self.blockerHit)
-				return self.state
+		elif self.saveScreen:
+			self.screen.blit(self.background, (0,0))
+			self.create_save_screen()
+		
 				
-			display.update()
-			self.clock.tick(60)
+			#display.update()
 #############################################
 #############################################			
 # REINFORCEMENT LEARNING ALGORITHM          #
@@ -1474,10 +1491,8 @@ def selectGameState(fileName, prevGame):
 	#matrixSetup = setupMatrix(statsPlayer, prevGame)
 	prevGameState = [prevGame[0],prevGame[1],prevGame[2],prevGame[3],prevGame[4],prevGame[5]]
 	prevGameState.extend(statsPlayer)
-	print(prevGameState)
 	prevGameState = scaler.transform([prevGameState])
 	optimalGame = dqnnetwork.inference(prevGameState)
-	print(dqnnetwork.inferenceQValue(prevGameState))
 	return GameState(int(prevGame[0]),var2[optimalGame],int(prevGame[2]),int(prevGame[3]),float(prevGame[4]),int(prevGame[5]))
 	#return valueToGameState(optimalGame, [var1, var2, var3, var4, var5, var6])
 	
