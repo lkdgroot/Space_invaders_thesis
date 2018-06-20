@@ -77,7 +77,6 @@ class Environment(object):
 				#	for i in logFileList:
 				#		logging_file.write(i)
 				self.fullCurrentState = nextFullState
-				print(self.fullCurrentState)
 			if self.bufferCount - self.batchSize > 0 and(self.bufferCount - self.batchSize) % self.switch == 0:
 				self.Artificial = random.choice([0,1])
 				self.deep.save(self.bufferCount - self.batchSize)

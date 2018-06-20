@@ -162,7 +162,6 @@ class DQN:
                 y_[i] = batch[i].reward + gamma * np.max(y2[i])
             with open(qvalFile, 'a') as file:
                 file.write(str(x[i]) + "\t" + str(x2[i]) + "\t" + str(batch[i].action) + "\t" + str(batch[i].reward) + "\t" + str(y_[i]) + "\n")
-                print(y_[i])
 
         self.train_step.run(feed_dict={
             self.x: x,

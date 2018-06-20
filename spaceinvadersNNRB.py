@@ -1502,7 +1502,6 @@ def valueToGameState(value, poss):
 	for i in range(len(poss) - 1, -1, -1):
 		rem, par = divmod(rem, len(poss[i]))
 		state.insert(0, poss[i][par])
-	print(state)
 	return GameState(state[0],state[1],state[2],state[3],state[4],state[5])
 		
 		
